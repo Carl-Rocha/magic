@@ -150,7 +150,8 @@
 .ghost-button,
 .nav-cta-button,
 .secondary-cta-button,
-.primary-cta-button {
+.primary-cta-button,
+.social-auth-button {
   cursor: pointer;
   font: inherit;
   transition:
@@ -186,6 +187,67 @@
   box-shadow:
     0 12px 24px rgba(138, 101, 255, 0.16),
     0 8px 18px rgba(255, 136, 72, 0.14);
+}
+
+.auth-divider {
+  position: relative;
+  margin-top: 16px;
+  text-align: center;
+}
+
+.auth-divider::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.auth-divider span {
+  position: relative;
+  z-index: 1;
+  padding: 0 12px;
+  background: rgba(11, 14, 24, 0.96);
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.68rem;
+}
+
+.social-auth-button {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 16px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.social-auth-button:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 160, 112, 0.24);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.social-auth-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(255, 136, 72, 0.22), rgba(138, 101, 255, 0.18));
+  color: #fff7f0;
+  font-size: 0.88rem;
+  font-weight: 700;
 }
 
 .auth-form-panel,

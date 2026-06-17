@@ -2,14 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import {
   browserLocalPersistence,
   createUserWithEmailAndPassword,
+  GoogleAuthProvider,
   onAuthStateChanged,
   setPersistence,
+  signInWithPopup,
   signInWithEmailAndPassword,
   signOut,
 } from "firebase/auth";
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   query,
   serverTimestamp,
@@ -348,6 +351,45 @@ async function fetchCommanderSuggestions(queryText) {
 
   const data = await response.json();
   return Array.isArray(data.data) ? data.data.slice(0, 8) : [];
+}
+
+async function ensureFirebasePlayerDocument(user) {
+  if (!firestore || !user) {
+    return;
+  }
+
+  const playerRef = doc(firestore, "players", user.uid);
+  const playerSnapshot = await getDoc(playerRef);
+
+  if (playerSnapshot.exists()) {
+    // Atualiza apenas os dados básicos do Google sem apagar o perfil salvo.
+    await setDoc(
+      playerRef,
+      {
+        uid: user.uid,
+        email: user.email ?? "",
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true },
+    );
+
+    return;
+  }
+
+  // Cria o perfil vazio somente no primeiro login desse usuário.
+  await setDoc(playerRef, {
+    uid: user.uid,
+    email: user.email ?? "",
+    displayName: user.displayName ?? "",
+    nickname: "",
+    commander: "",
+    commanderManaCost: "",
+    commanderOracleText: "",
+    bio: "",
+    commanderImageUrl: "",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
 }
 
 function App() {
@@ -924,6 +966,26 @@ function App() {
     setAuthForm(authInitialState);
   }
 
+  async function handleGoogleAuth() {
+    setAuthMessage("");
+
+    if (!hasFirebaseConfig || !auth) {
+      setAuthMessage("Login com Google precisa do Firebase configurado.");
+      return;
+    }
+
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+
+      const credentials = await signInWithPopup(auth, provider);
+      await ensureFirebasePlayerDocument(credentials.user);
+      setAuthForm(authInitialState);
+    } catch {
+      setAuthMessage("Nao foi possivel entrar com Google.");
+    }
+  }
+
   async function handleSaveProfile(event) {
     event.preventDefault();
 
@@ -976,7 +1038,6 @@ function App() {
           {
             ...payload,
             updatedAt: serverTimestamp(),
-            createdAt: currentProfile?.createdAt ?? serverTimestamp(),
           },
           { merge: true },
         );
@@ -1121,6 +1182,21 @@ function App() {
                 <p className="feedback-text">{authMessage}</p>
               ) : null}
             </form>
+
+            <div className="auth-divider">
+              <span>ou</span>
+            </div>
+
+            <button
+              className="social-auth-button"
+              type="button"
+              onClick={handleGoogleAuth}
+            >
+              <span className="social-auth-icon">G</span>
+              {authMode === "login"
+                ? "Entrar com Google"
+                : "Criar conta com Google"}
+            </button>
           </section>
 
           <section className="login-next-session">
