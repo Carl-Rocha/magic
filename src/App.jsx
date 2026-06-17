@@ -746,6 +746,26 @@ function App() {
     const positionClass =
       offset === 0 ? "is-active" : distance === 1 ? "is-near" : "is-far";
 
+    const oracleLength = player.commanderOracleText?.length ?? 0;
+    const bioLength = player.bio?.length ?? 0;
+    const oracleSizeClass =
+      oracleLength > 360
+        ? "oracle-text-xs"
+        : oracleLength > 240
+          ? "oracle-text-sm"
+          : oracleLength > 130
+            ? "oracle-text-md"
+            : "";
+
+    const bioSizeClass =
+      bioLength > 520
+        ? "player-bio-xs"
+        : bioLength > 320
+          ? "player-bio-sm"
+          : bioLength > 180
+            ? "player-bio-md"
+            : "";
+
     return (
       <article
         key={player.id}
@@ -771,19 +791,23 @@ function App() {
           )}
         </div>
 
-        <span>{player.nickname || "Jogador da mesa"}</span>
-        <h3>{player.displayName || "Sem nome"}</h3>
-        <strong>{player.commander || "Comandante nao definido"}</strong>
+        <div className="player-card-content">
+          <span>{player.nickname || "Jogador da mesa"}</span>
+          <h3>{player.displayName || "Sem nome"}</h3>
+          <strong>{player.commander || "Comandante nao definido"}</strong>
 
-        {renderManaCost(player.commanderManaCost)}
+          {renderManaCost(player.commanderManaCost)}
 
-        {offset === 0 && player.commanderOracleText ? (
-          <div className="commander-rules-text">
-            {renderOracleText(player.commanderOracleText)}
-          </div>
-        ) : null}
+          {offset === 0 && player.commanderOracleText ? (
+            <div className={`commander-rules-text ${oracleSizeClass}`}>
+              {renderOracleText(player.commanderOracleText)}
+            </div>
+          ) : null}
 
-        <p>{player.bio || "Sem descricao ainda."}</p>
+          <p className={`player-bio ${bioSizeClass}`}>
+            {player.bio || "Sem descricao ainda."}
+          </p>
+        </div>
       </article>
     );
   }
