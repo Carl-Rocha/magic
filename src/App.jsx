@@ -414,6 +414,8 @@ function App() {
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const [profileStep, setProfileStep] = useState(0);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchCurrentX, setTouchCurrentX] = useState(null);
   const [isCommanderEditing, setIsCommanderEditing] = useState(false);
   const [commanderPreview, setCommanderPreview] = useState(null);
   const [commanderLookupState, setCommanderLookupState] = useState("idle");
@@ -676,6 +678,47 @@ function App() {
       const safeCurrent = Math.min(current, players.length - 1);
       return safeCurrent === players.length - 1 ? 0 : safeCurrent + 1;
     });
+  }
+
+  function handleCarouselTouchStart(event) {
+    const firstTouch = event.touches?.[0];
+
+    if (!firstTouch) {
+      return;
+    }
+
+    setTouchStartX(firstTouch.clientX);
+    setTouchCurrentX(firstTouch.clientX);
+  }
+
+  function handleCarouselTouchMove(event) {
+    const firstTouch = event.touches?.[0];
+
+    if (!firstTouch || touchStartX === null) {
+      return;
+    }
+
+    setTouchCurrentX(firstTouch.clientX);
+  }
+
+  function handleCarouselTouchEnd() {
+    if (touchStartX === null || touchCurrentX === null || players.length <= 1) {
+      setTouchStartX(null);
+      setTouchCurrentX(null);
+      return;
+    }
+
+    const swipeDistance = touchCurrentX - touchStartX;
+    const minimumSwipeDistance = 45;
+
+    if (swipeDistance <= -minimumSwipeDistance) {
+      handleNextPlayer();
+    } else if (swipeDistance >= minimumSwipeDistance) {
+      handlePreviousPlayer();
+    }
+
+    setTouchStartX(null);
+    setTouchCurrentX(null);
   }
 
   function renderManaCost(manaCost) {
@@ -1928,7 +1971,12 @@ function App() {
               ‹
             </button>
 
-            <div className="players-carousel-viewport">
+            <div
+              className="players-carousel-viewport"
+              onTouchStart={handleCarouselTouchStart}
+              onTouchMove={handleCarouselTouchMove}
+              onTouchEnd={handleCarouselTouchEnd}
+            >
               <div className="players-carousel-track">
                 {players.length > 0 ? (
                   players.map((player, index) =>

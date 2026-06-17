@@ -1836,3 +1836,36 @@
     right: -2px;
   }
 }
+
+/* =========================================================
+   MOBILE: NAVEGAÇÃO POR SWIPE
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .players-carousel-viewport {
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+  }
+
+  .players-carousel-viewport:active {
+    cursor: grabbing;
+  }
+
+  .players-carousel .carousel-arrow {
+    display: none;
+  }
+
+  .players-carousel {
+    display: block;
+  }
+
+  .players-carousel-viewport {
+    padding-inline: 0;
+  }
+
+  .player-carousel-card {
+    width: calc(100% - 12px);
+  }
+}
