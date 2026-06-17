@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">MTG Crest com alto contraste</title>
+  <desc id="desc">Símbolo branco com contorno azul-claro para uso em fundos escuros.</desc>
+  <defs>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="12" result="blur"/>
+      <feFlood flood-color="#38bdf8" flood-opacity="0.9"/>
+      <feComposite in2="blur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <path
+    d="M512 118 474 432 430 444 388 226 342 462 286 486 248 306 220 548c112 52 194 126 244 222 26 50 42 100 48 136 7-36 23-86 49-136 50-96 132-170 243-222l-28-242-38 180-56-24-46-236-42 218-44-12z"
+    fill="#ffffff"
+    stroke="#7dd3fc"
+    stroke-width="18"
+    stroke-linejoin="round"
+    paint-order="stroke fill"
+    filter="url(#glow)"
+  />
+</svg>

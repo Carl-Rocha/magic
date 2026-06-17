@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+:root {
+  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #f4efe8;
+  background:
+    radial-gradient(circle at top, rgba(255, 122, 56, 0.16) 0%, transparent 30%),
+    radial-gradient(circle at 80% 20%, rgba(108, 68, 255, 0.14) 0%, transparent 28%),
+    linear-gradient(180deg, #06070d 0%, #0c0f19 42%, #090b13 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  --text-strong: #fff6ee;
+  --muted: #b4bac8;
+  --accent: #ff9864;
+  --accent-soft: #ffd0bf;
+  --display: 'Cormorant Garamond', Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: transparent;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1 {
+  font-family: var(--display);
+  font-size: clamp(3.4rem, 10vw, 7rem);
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  color: var(--text-strong);
+  margin: 0;
+}
+
+h2 {
+  font-family: var(--display);
+  font-size: clamp(2.4rem, 6vw, 4.5rem);
+  line-height: 0.96;
+}
+
+p {
+  font-size: 1rem;
+  margin: 0;
+}
