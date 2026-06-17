@@ -1586,7 +1586,7 @@
 
 .player-card-content .player-bio {
   flex: 0 0 auto;
-  margin: 2px 0 0;
+  margin: 12px 0 0;
   color: var(--muted);
   font-size: 0.96rem;
   line-height: 1.55;
@@ -1717,5 +1717,122 @@
 @media (max-width: 430px) {
   .player-carousel-card {
     width: min(86vw, 360px);
+  }
+}
+
+/* =========================================================
+   CORREÇÃO MOBILE: CARD SEM CORTE LATERAL
+   ========================================================= */
+
+@media (max-width: 760px) {
+  .players-section {
+    padding: 20px 10px 24px;
+    overflow: hidden;
+  }
+
+  .players-carousel {
+    position: relative;
+    display: block;
+    width: 100%;
+    min-height: 630px;
+    margin-top: 18px;
+  }
+
+  .players-carousel-viewport {
+    width: 100%;
+    min-height: 620px;
+    overflow: hidden;
+    padding-inline: 8px;
+  }
+
+  .players-carousel-track {
+    width: 100%;
+    min-height: 610px;
+  }
+
+  .player-carousel-card {
+    --card-shift: 100vw;
+
+    top: 10px;
+    left: 50%;
+    width: calc(100% - 20px);
+    max-width: 390px;
+    height: auto;
+    min-height: 560px;
+    max-height: 590px;
+    padding: 14px;
+    transform: translateX(calc(-50% + (var(--offset) * var(--card-shift))))
+      scale(calc(1 - (var(--distance) * 0.08)));
+  }
+
+  .player-carousel-card.is-active {
+    transform: translateX(-50%) scale(1);
+  }
+
+  .player-carousel-card:not(.is-active) {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .carousel-arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 80;
+    width: 42px;
+    height: 42px;
+    transform: translateY(-50%);
+    font-size: 30px;
+    background: rgba(10, 12, 20, 0.88);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.38);
+  }
+
+  .carousel-arrow:hover:not(:disabled) {
+    transform: translateY(-50%) scale(1.05);
+  }
+
+  .carousel-arrow-left {
+    left: 2px;
+  }
+
+  .carousel-arrow-right {
+    right: 2px;
+  }
+
+  .player-avatar img,
+  .player-avatar-fallback {
+    height: clamp(165px, 29vh, 205px);
+  }
+
+  .carousel-dots {
+    bottom: 12px;
+  }
+
+  .players-carousel-viewport .carousel-status {
+    display: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .players-section {
+    padding-inline: 8px;
+  }
+
+  .players-carousel-viewport {
+    padding-inline: 4px;
+  }
+
+  .player-carousel-card {
+    width: calc(100% - 10px);
+    max-width: none;
+    min-height: 550px;
+    max-height: 585px;
+  }
+
+  .carousel-arrow-left {
+    left: -2px;
+  }
+
+  .carousel-arrow-right {
+    right: -2px;
   }
 }
