@@ -76,7 +76,7 @@
 .login-brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
 }
 
 .login-brand img {
@@ -104,7 +104,7 @@
 }
 
 .login-copy {
-  margin-top: 22px;
+  margin-top: 18px;
 }
 
 .login-copy h1 {
@@ -120,13 +120,13 @@
 }
 
 .login-copy-compact h1 {
-  font-size: clamp(3rem, 8vw, 4.8rem);
-  line-height: 0.92;
+  font-size: clamp(2.2rem, 6vw, 3.2rem);
+  line-height: 0.96;
 }
 
 .login-lead {
-  margin-top: 14px;
-  max-width: 30ch;
+  margin-top: 10px;
+  max-width: 24ch;
   color: var(--muted);
 }
 
@@ -173,6 +173,19 @@
   border: 0;
   background: linear-gradient(135deg, #ff8848, #8a65ff);
   color: #fff7f0;
+}
+
+.primary-cta-button {
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  box-shadow:
+    0 12px 24px rgba(138, 101, 255, 0.16),
+    0 8px 18px rgba(255, 136, 72, 0.14);
 }
 
 .auth-form-panel,
@@ -579,8 +592,10 @@
 
 .profile-panel-modal {
   width: min(1120px, 100%);
-  max-height: calc(100vh - 48px);
-  overflow: auto;
+  height: min(860px, calc(100vh - 48px));
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .profile-modal-topbar {
@@ -595,6 +610,8 @@
   grid-template-columns: 220px minmax(0, 1fr);
   gap: 22px;
   margin-top: 20px;
+  flex: 1;
+  min-height: 0;
 }
 
 .profile-steps {
@@ -644,12 +661,16 @@
 
 .profile-form-wizard {
   margin-top: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
 }
 
 .profile-stage {
   position: relative;
   overflow: hidden;
-  min-height: 360px;
+  min-height: 0;
+  height: 100%;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background:
@@ -660,6 +681,8 @@
   padding: 24px;
   display: grid;
   gap: 18px;
+  height: 100%;
+  align-content: start;
   animation: profileFadeIn 240ms ease;
 }
 
@@ -667,7 +690,7 @@
   margin: 0;
   color: var(--text-strong);
   font-family: var(--display);
-  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-size: clamp(1.55rem, 3vw, 2.25rem);
 }
 
 .profile-stage-fields {
@@ -744,12 +767,32 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 260px;
   gap: 18px;
-  align-items: start;
+  align-items: center;
+  min-height: 0;
+}
+
+.profile-commander-layout.is-editing {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
 }
 
 .commander-input-stack {
   display: grid;
   gap: 10px;
+  align-content: center;
+}
+
+.commander-input-focus {
+  width: min(100%, 560px);
+  padding: 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
+}
+
+.commander-edit-button {
+  margin-top: 12px;
 }
 
 .commander-suggestions {
@@ -779,17 +822,37 @@
 }
 
 .commander-preview-card {
-  padding: 14px;
-  border-radius: 20px;
+  padding: 12px;
+  border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.03);
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.commander-preview-card-focus {
+  width: min(100%, 720px);
+  justify-self: center;
+}
+
+.commander-preview-card-selected {
+  width: min(100%, 720px);
+  justify-self: center;
+}
+
+.commander-preview-media {
+  min-width: 0;
 }
 
 .commander-preview-image,
 .commander-preview-fallback {
   width: 100%;
-  aspect-ratio: 0.75;
-  border-radius: 16px;
+  height: 100%;
+  min-height: 248px;
+  max-height: 320px;
+  border-radius: 14px;
 }
 
 .commander-preview-image {
@@ -808,7 +871,11 @@
 }
 
 .commander-preview-copy {
-  margin-top: 14px;
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: left;
 }
 
 .commander-preview-copy span {
@@ -822,8 +889,8 @@
 
 .commander-preview-copy strong {
   color: var(--text-strong);
-  font-size: 1.05rem;
-  line-height: 1.35;
+  font-size: 1.2rem;
+  line-height: 1.25;
 }
 
 .commander-meta-line {
@@ -838,7 +905,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 8px;
+  justify-content: flex-start;
 }
 
 .mana-symbol {
@@ -877,10 +945,11 @@
 }
 
 .commander-rules-text {
-  margin-top: 10px;
+  margin-top: 8px;
   color: var(--muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-align: left;
 }
 
 .oracle-line {
@@ -1039,6 +1108,42 @@
   }
 }
 
+@media (max-height: 900px) {
+  .profile-overlay {
+    padding: 16px;
+  }
+
+  .profile-panel-modal {
+    height: calc(100vh - 32px);
+  }
+
+  .profile-wizard {
+    gap: 16px;
+    margin-top: 14px;
+  }
+
+  .profile-stage-panel {
+    padding: 18px;
+    gap: 12px;
+  }
+
+  .commander-preview-card-focus,
+  .commander-preview-card-selected {
+    width: min(100%, 660px);
+  }
+
+  .commander-preview-image,
+  .commander-preview-fallback {
+    min-height: 200px;
+    max-height: 240px;
+  }
+
+  .commander-rules-text {
+    font-size: 0.74rem;
+    line-height: 1.22;
+  }
+}
+
 @media (max-width: 760px) {
   .login-panel,
   .hero-panel,
@@ -1079,6 +1184,24 @@
   .profile-modal-topbar {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .commander-preview-card {
+    grid-template-columns: 1fr;
+  }
+
+  .commander-preview-card-focus,
+  .commander-preview-card-selected {
+    width: min(100%, 320px);
+  }
+
+  .commander-preview-copy,
+  .commander-rules-text {
+    text-align: center;
+  }
+
+  .mana-cost-row {
+    justify-content: center;
   }
 
   .profile-stage-fields,

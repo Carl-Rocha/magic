@@ -16,7 +16,8 @@ import {
   setDoc,
 } from "firebase/firestore";
 import "./App.css";
-import heroArtwork from "./assets/official/meta-homepage.jpg";
+import heroArtwork from "./assets/background.png";
+import heroPanelArtwork from "./assets/hero2.png";
 import planeswalkerLogo from "./assets/mtg-crest.svg";
 import { auth, firestore, hasFirebaseConfig } from "./firebase";
 
@@ -368,6 +369,7 @@ function App() {
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
   const [profileStep, setProfileStep] = useState(0);
   const [activePlayerIndex, setActivePlayerIndex] = useState(0);
+  const [isCommanderEditing, setIsCommanderEditing] = useState(false);
   const [commanderPreview, setCommanderPreview] = useState(null);
   const [commanderLookupState, setCommanderLookupState] = useState("idle");
   const [commanderSuggestions, setCommanderSuggestions] = useState([]);
@@ -490,7 +492,7 @@ function App() {
   }, [activePlayerIndex, players]);
 
   useEffect(() => {
-    if (!profileOpen) {
+    if (!profileOpen || !isCommanderEditing) {
       return undefined;
     }
 
@@ -511,7 +513,7 @@ function App() {
     }, 320);
 
     return () => window.clearTimeout(timeoutId);
-  }, [profileForm.commander, profileOpen]);
+  }, [isCommanderEditing, profileForm.commander, profileOpen]);
 
   useEffect(() => {
     if (!profileOpen) {
@@ -566,6 +568,10 @@ function App() {
     setProfileForm((current) => ({ ...current, [name]: value }));
 
     if (name === "commander") {
+      if (!value.trim()) {
+        setCommanderSuggestions([]);
+      }
+      setIsCommanderEditing(true);
       setSelectedCommanderName("");
       setCommanderLookupState(value.trim() ? "idle" : "idle");
     }
@@ -575,6 +581,7 @@ function App() {
     setProfileForm((current) => ({ ...current, commander: suggestion }));
     setCommanderSuggestions([]);
     setSelectedCommanderName(suggestion);
+    setIsCommanderEditing(false);
   }
 
   function updateEventField(event) {
@@ -684,6 +691,7 @@ function App() {
         : null,
     );
     setSelectedCommanderName(currentProfile?.commander ?? "");
+    setIsCommanderEditing(!currentProfile?.commander);
     setCommanderLookupState(currentProfile?.commander ? "success" : "idle");
     setProfileOpen(true);
   }
@@ -702,6 +710,7 @@ function App() {
     }
 
     setProfileOpen(false);
+    setCommanderSuggestions([]);
     setEditingEventId(null);
     setEventForm(eventInitialState);
     setEventMessage("");
@@ -1033,18 +1042,16 @@ function App() {
             <div className="login-brand">
               <img src={planeswalkerLogo} alt="Simbolo de planeswalker" />
               <div>
-                <p>Mesa de Magic</p>
-                <span>{authMode === "login" ? "Entrar" : "Criar conta"}</span>
+                <p>MTG Hub</p>
               </div>
             </div>
 
             <div className="login-copy login-copy-compact">
-              <p className="eyebrow">Playgroup hub</p>
-              <h1>MTG Hub.</h1>
+              <h1>{authMode === "login" ? "Entrar" : "Criar conta"}</h1>
               <p className="login-lead">
                 {authMode === "login"
-                  ? "Entre para ver a mesa, o contador e os jogadores."
-                  : "Crie seu acesso e prepare seu lugar na próxima jogatina."}
+                  ? "Acesse sua mesa."
+                  : "Crie seu acesso para entrar na mesa."}
               </p>
             </div>
 
@@ -1158,7 +1165,7 @@ function App() {
             <img src={planeswalkerLogo} alt="Simbolo de planeswalker" />
           </span>
           <div>
-            <p>Mesa de Magic</p>
+            <p>Magic dos Cria</p>
             <span>Contador, jogadores e perfil da mesa</span>
           </div>
         </div>
@@ -1238,7 +1245,7 @@ function App() {
           </div>
 
           <div className="hero-visual">
-            <img className="hero-backdrop" src={heroArtwork} alt="" />
+            <img className="hero-backdrop" src={heroPanelArtwork} alt="" />
             <div className="hero-card-stack hero-session-panel">
               <span>Mesa atual</span>
               <strong>{players.length} jogadores listados</strong>
@@ -1277,7 +1284,7 @@ function App() {
                 <div className="section-heading">
                   <div>
                     <p className="eyebrow">Meu perfil</p>
-                    <h2>Monte sua ficha da mesa em etapas.</h2>
+                    <h2>Prepare seu perfil para a próxima mesa.</h2>
                   </div>
                 </div>
 
@@ -1348,60 +1355,83 @@ function App() {
                       <div className="profile-stage-panel">
                         <p className="eyebrow">Etapa 2</p>
                         <h3>Escolha seu comandante</h3>
-                        <div className="profile-commander-layout">
-                          <div className="commander-input-stack">
-                            <label className="full-width">
-                              Comandante
-                              <input
-                                name="commander"
-                                value={profileForm.commander}
-                                onChange={updateProfileField}
-                                placeholder="Ex.: Kaalia of the Vast"
-                                autoComplete="off"
-                              />
-                            </label>
+                        <div
+                          className={
+                            isCommanderEditing
+                              ? "profile-commander-layout is-editing"
+                              : "profile-commander-layout"
+                          }
+                        >
+                          {isCommanderEditing ? (
+                            <div className="commander-input-stack commander-input-focus">
+                              <label className="full-width">
+                                Comandante
+                                <input
+                                  name="commander"
+                                  value={profileForm.commander}
+                                  onChange={updateProfileField}
+                                  placeholder="Ex.: Kaalia of the Vast"
+                                  autoComplete="off"
+                                />
+                              </label>
 
-                            {commanderSuggestions.length > 0 ? (
-                              <div className="commander-suggestions">
-                                {commanderSuggestions.map((suggestion) => (
-                                  <button
-                                    key={suggestion}
-                                    className="commander-suggestion"
-                                    type="button"
-                                    onClick={() =>
-                                      handleCommanderSuggestionSelect(
-                                        suggestion,
-                                      )
-                                    }
-                                  >
-                                    {suggestion}
-                                  </button>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
+                              {commanderSuggestions.length > 0 ? (
+                                <div className="commander-suggestions">
+                                  {commanderSuggestions
+                                    .filter(
+                                      (suggestion) =>
+                                        suggestion !== selectedCommanderName,
+                                    )
+                                    .map((suggestion) => (
+                                      <button
+                                        key={suggestion}
+                                        className="commander-suggestion"
+                                        type="button"
+                                        onClick={() =>
+                                          handleCommanderSuggestionSelect(
+                                            suggestion,
+                                          )
+                                        }
+                                      >
+                                        {suggestion}
+                                      </button>
+                                    ))}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
 
-                          <div className="commander-preview-card">
-                            {commanderPreview?.commanderImageUrl ? (
-                              <img
-                                className="commander-preview-image"
-                                src={commanderPreview.commanderImageUrl}
-                                alt={commanderPreview.commander}
-                              />
-                            ) : (
-                              <div className="commander-preview-fallback">
-                                {commanderLookupState === "loading"
-                                  ? "Buscando"
-                                  : "Commander"}
-                              </div>
-                            )}
+                          <div
+                            className={
+                              isCommanderEditing
+                                ? "commander-preview-card commander-preview-card-focus"
+                                : "commander-preview-card commander-preview-card-selected"
+                            }
+                          >
+                            <div className="commander-preview-media">
+                              {commanderPreview?.commanderImageUrl ? (
+                                <img
+                                  className="commander-preview-image"
+                                  src={commanderPreview.commanderImageUrl}
+                                  alt={commanderPreview.commander}
+                                />
+                              ) : (
+                                <div className="commander-preview-fallback">
+                                  {commanderLookupState === "loading"
+                                    ? "Buscando"
+                                    : "Commander"}
+                                </div>
+                              )}
+                            </div>
                             <div className="commander-preview-copy">
                               <span>
                                 {commanderLookupState === "loading"
                                   ? "Consultando grimorio"
                                   : commanderLookupState === "error"
                                     ? "Nao encontrado"
-                                    : "Preview"}
+                                    : isCommanderEditing
+                                      ? "Preview"
+                                      : "Comandante escolhido"}
                               </span>
                               <strong>
                                 {commanderPreview?.commander ||
@@ -1418,6 +1448,15 @@ function App() {
                                   )}
                                 </div>
                               ) : null}
+                              {profileForm.commander && !isCommanderEditing ? (
+                                <button
+                                  className="secondary-cta-button commander-edit-button"
+                                  type="button"
+                                  onClick={() => setIsCommanderEditing(true)}
+                                >
+                                  Trocar comandante
+                                </button>
+                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -1427,9 +1466,9 @@ function App() {
                     {profileStep === 2 ? (
                       <div className="profile-stage-panel">
                         <p className="eyebrow">Etapa 3</p>
-                        <h3>Descricao do jogador</h3>
+                        <h3>Sobre você</h3>
                         <label className="full-width">
-                          Como voce joga
+                          Deixe uma citação legal ou fala como você vai combar
                           <textarea
                             name="bio"
                             rows="5"
@@ -1653,14 +1692,22 @@ function App() {
                   className="player-card player-card-featured"
                 >
                   <div className="player-avatar">
-                    {visiblePlayer.commanderImageUrl || visiblePlayer.avatarUrl ? (
+                    {visiblePlayer.commanderImageUrl ||
+                    visiblePlayer.avatarUrl ? (
                       <img
-                        src={visiblePlayer.commanderImageUrl || visiblePlayer.avatarUrl}
-                        alt={visiblePlayer.commander || visiblePlayer.displayName}
+                        src={
+                          visiblePlayer.commanderImageUrl ||
+                          visiblePlayer.avatarUrl
+                        }
+                        alt={
+                          visiblePlayer.commander || visiblePlayer.displayName
+                        }
                       />
                     ) : (
                       <div className="player-avatar-fallback">
-                        {(visiblePlayer.displayName || "?").slice(0, 1).toUpperCase()}
+                        {(visiblePlayer.displayName || "?")
+                          .slice(0, 1)
+                          .toUpperCase()}
                       </div>
                     )}
                   </div>
