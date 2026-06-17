@@ -11,6 +11,7 @@ import {
 } from "firebase/auth";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
@@ -405,7 +406,9 @@ function App() {
   const [players, setPlayers] = useState(() =>
     hasFirebaseConfig ? [] : loadLocalPlayers(),
   );
-  const [events, setEvents] = useState(() => loadLocalEvents());
+  const [events, setEvents] = useState(() =>
+    hasFirebaseConfig ? [] : loadLocalEvents(),
+  );
   const [currentUser, setCurrentUser] = useState(() => loadLocalSession());
   const [profileOpen, setProfileOpen] = useState(false);
   const [adminPanelOpen, setAdminPanelOpen] = useState(false);
@@ -421,7 +424,8 @@ function App() {
   const [eventMessage, setEventMessage] = useState("");
   const [editingEventId, setEditingEventId] = useState(null);
   const [countdown, setCountdown] = useState(() => {
-    const initialEvent = resolveNextEvent(loadLocalEvents());
+    const initialEvents = hasFirebaseConfig ? [] : loadLocalEvents();
+    const initialEvent = resolveNextEvent(initialEvents);
     return getCountdownParts(
       initialEvent ? new Date(initialEvent.startsAt) : null,
     );
@@ -512,6 +516,32 @@ function App() {
     return unsubscribe;
   }, []);
 
+  useEffect(() => {
+    if (!hasFirebaseConfig || !firestore) {
+      return undefined;
+    }
+
+    const eventsQuery = query(collection(firestore, "events"));
+
+    const unsubscribe = onSnapshot(
+      eventsQuery,
+      (snapshot) => {
+        const firebaseEvents = snapshot.docs.map((snapshotDoc) => ({
+          id: snapshotDoc.id,
+          ...snapshotDoc.data(),
+        }));
+
+        setEvents(sortEvents(firebaseEvents));
+      },
+      (error) => {
+        console.error("Erro ao carregar roles:", error);
+        setEventMessage("Nao foi possivel carregar os roles.");
+      },
+    );
+
+    return unsubscribe;
+  }, []);
+
   const currentProfile = useMemo(() => {
     if (!currentUser) {
       return null;
@@ -525,13 +555,8 @@ function App() {
     );
   }, [currentUser, players]);
 
-  const visiblePlayer = useMemo(() => {
-    if (players.length === 0) {
-      return null;
-    }
-
-    return players[Math.min(activePlayerIndex, players.length - 1)] ?? null;
-  }, [activePlayerIndex, players]);
+  const safeActivePlayerIndex =
+    players.length === 0 ? 0 : Math.min(activePlayerIndex, players.length - 1);
 
   useEffect(() => {
     if (!profileOpen || !isCommanderEditing) {
@@ -632,13 +657,25 @@ function App() {
   }
 
   function handlePreviousPlayer() {
-    setActivePlayerIndex((current) => Math.max(current - 1, 0));
+    if (players.length <= 1) {
+      return;
+    }
+
+    setActivePlayerIndex((current) => {
+      const safeCurrent = Math.min(current, players.length - 1);
+      return safeCurrent === 0 ? players.length - 1 : safeCurrent - 1;
+    });
   }
 
   function handleNextPlayer() {
-    setActivePlayerIndex((current) =>
-      Math.min(current + 1, Math.max(players.length - 1, 0)),
-    );
+    if (players.length <= 1) {
+      return;
+    }
+
+    setActivePlayerIndex((current) => {
+      const safeCurrent = Math.min(current, players.length - 1);
+      return safeCurrent === players.length - 1 ? 0 : safeCurrent + 1;
+    });
   }
 
   function renderManaCost(manaCost) {
@@ -701,6 +738,54 @@ function App() {
           )}
       </span>
     ));
+  }
+
+  function renderPlayerCard(player, index) {
+    const offset = index - safeActivePlayerIndex;
+    const distance = Math.abs(offset);
+    const positionClass =
+      offset === 0 ? "is-active" : distance === 1 ? "is-near" : "is-far";
+
+    return (
+      <article
+        key={player.id}
+        className={`player-card player-carousel-card ${positionClass}`}
+        style={{
+          "--offset": offset,
+          "--distance": distance,
+          zIndex: Math.max(1, players.length - distance),
+        }}
+        onClick={() => setActivePlayerIndex(index)}
+        aria-current={offset === 0 ? "true" : undefined}
+      >
+        <div className="player-avatar">
+          {player.commanderImageUrl || player.avatarUrl ? (
+            <img
+              src={player.commanderImageUrl || player.avatarUrl}
+              alt={player.commander || player.displayName}
+            />
+          ) : (
+            <div className="player-avatar-fallback">
+              {(player.displayName || "?").slice(0, 1).toUpperCase()}
+            </div>
+          )}
+        </div>
+
+        <span>{player.nickname || "Jogador da mesa"}</span>
+        <h3>{player.displayName || "Sem nome"}</h3>
+        <strong>{player.commander || "Comandante nao definido"}</strong>
+
+        {renderManaCost(player.commanderManaCost)}
+
+        {offset === 0 && player.commanderOracleText ? (
+          <div className="commander-rules-text">
+            {renderOracleText(player.commanderOracleText)}
+          </div>
+        ) : null}
+
+        <p>{player.bio || "Sem descricao ainda."}</p>
+      </article>
+    );
   }
 
   function handleToggleProfile() {
@@ -771,11 +856,25 @@ function App() {
     setAdminPanelOpen(true);
   }
 
-  function handleDeleteEvent(eventId) {
-    const nextEvents = events.filter((eventItem) => eventItem.id !== eventId);
-    setEvents(sortEvents(nextEvents));
-    saveLocalEvents(nextEvents);
-    setEventMessage("Role removido.");
+  async function handleDeleteEvent(eventId) {
+    setEventMessage("");
+
+    if (hasFirebaseConfig && firestore) {
+      try {
+        await deleteDoc(doc(firestore, "events", eventId));
+        setEventMessage("Role removido.");
+      } catch (error) {
+        console.error("Erro ao remover role:", error);
+        setEventMessage("Nao foi possivel remover o role.");
+        return;
+      }
+    } else {
+      const nextEvents = events.filter((eventItem) => eventItem.id !== eventId);
+
+      setEvents(sortEvents(nextEvents));
+      saveLocalEvents(nextEvents);
+      setEventMessage("Role removido localmente.");
+    }
 
     if (editingEventId === eventId) {
       setEditingEventId(null);
@@ -783,7 +882,7 @@ function App() {
     }
   }
 
-  function handleSaveEvent(event) {
+  async function handleSaveEvent(event) {
     event.preventDefault();
     setEventMessage("");
 
@@ -799,25 +898,60 @@ function App() {
       return;
     }
 
+    const isEditing = Boolean(editingEventId);
+    const eventId = editingEventId ?? `event-${crypto.randomUUID()}`;
+
     const payload = {
-      id: editingEventId ?? `event-${crypto.randomUUID()}`,
       title: eventForm.title.trim(),
       startsAt: parsedDate.toISOString(),
       location: eventForm.location.trim(),
       notes: eventForm.notes.trim(),
+      updatedAt: serverTimestamp(),
     };
 
-    const nextEvents = editingEventId
+    if (hasFirebaseConfig && firestore) {
+      try {
+        await setDoc(
+          doc(firestore, "events", eventId),
+          {
+            ...payload,
+            ...(isEditing ? {} : { createdAt: serverTimestamp() }),
+          },
+          { merge: true },
+        );
+
+        setEditingEventId(null);
+        setEventForm(eventInitialState);
+        setEventMessage(isEditing ? "Role atualizado." : "Role criado.");
+        return;
+      } catch (error) {
+        console.error("Erro ao salvar role:", error);
+        setEventMessage("Nao foi possivel salvar o role.");
+        return;
+      }
+    }
+
+    const localPayload = {
+      id: eventId,
+      title: payload.title,
+      startsAt: payload.startsAt,
+      location: payload.location,
+      notes: payload.notes,
+    };
+
+    const nextEvents = isEditing
       ? events.map((eventItem) =>
-          eventItem.id === editingEventId ? payload : eventItem,
+          eventItem.id === eventId ? localPayload : eventItem,
         )
-      : [...events, payload];
+      : [...events, localPayload];
 
     setEvents(sortEvents(nextEvents));
     saveLocalEvents(nextEvents);
     setEditingEventId(null);
     setEventForm(eventInitialState);
-    setEventMessage(editingEventId ? "Role atualizado." : "Role criado.");
+    setEventMessage(
+      isEditing ? "Role atualizado localmente." : "Role criado localmente.",
+    );
   }
 
   function goToNextProfileStep() {
@@ -1318,6 +1452,15 @@ function App() {
                 <span>Seg</span>
               </article>
             </div>
+
+            <div className="next-event-description">
+              <span>Descrição do evento</span>
+              <p>
+                {nextEvent?.notes?.trim()
+                  ? nextEvent.notes
+                  : "Nenhuma descrição cadastrada para este evento."}
+              </p>
+            </div>
           </div>
 
           <div className="hero-visual">
@@ -1752,77 +1895,57 @@ function App() {
 
           <div className="players-carousel">
             <button
-              className="carousel-arrow"
+              className="carousel-arrow carousel-arrow-left"
               type="button"
               onClick={handlePreviousPlayer}
-              disabled={players.length <= 1 || activePlayerIndex === 0}
+              disabled={players.length <= 1}
               aria-label="Jogador anterior"
             >
               ‹
             </button>
 
-            <div className="players-carousel-stage">
-              {visiblePlayer ? (
-                <article
-                  key={visiblePlayer.id}
-                  className="player-card player-card-featured"
-                >
-                  <div className="player-avatar">
-                    {visiblePlayer.commanderImageUrl ||
-                    visiblePlayer.avatarUrl ? (
-                      <img
-                        src={
-                          visiblePlayer.commanderImageUrl ||
-                          visiblePlayer.avatarUrl
-                        }
-                        alt={
-                          visiblePlayer.commander || visiblePlayer.displayName
-                        }
-                      />
-                    ) : (
-                      <div className="player-avatar-fallback">
-                        {(visiblePlayer.displayName || "?")
-                          .slice(0, 1)
-                          .toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <span>{visiblePlayer.nickname || "Jogador da mesa"}</span>
-                  <h3>{visiblePlayer.displayName || "Sem nome"}</h3>
-                  <strong>
-                    {visiblePlayer.commander || "Comandante nao definido"}
-                  </strong>
-                  {renderManaCost(visiblePlayer.commanderManaCost)}
-                  {visiblePlayer.commanderOracleText ? (
-                    <div className="commander-rules-text">
-                      {renderOracleText(visiblePlayer.commanderOracleText)}
-                    </div>
-                  ) : null}
-                  <p>{visiblePlayer.bio || "Sem descricao ainda."}</p>
-                </article>
-              ) : (
-                <article className="player-card player-card-featured player-card-empty">
-                  <h3>Nenhum jogador ainda</h3>
-                  <p>Crie um perfil para começar a preencher a mesa.</p>
-                </article>
-              )}
+            <div className="players-carousel-viewport">
+              <div className="players-carousel-track">
+                {players.length > 0 ? (
+                  players.map((player, index) =>
+                    renderPlayerCard(player, index),
+                  )
+                ) : (
+                  <article className="player-card player-carousel-card is-active player-card-empty">
+                    <h3>Nenhum jogador ainda</h3>
+                    <p>Crie um perfil para começar a preencher a mesa.</p>
+                  </article>
+                )}
+              </div>
+
+              <div className="carousel-dots" aria-label="Selecionar jogador">
+                {players.map((player, index) => (
+                  <button
+                    key={player.id}
+                    type="button"
+                    className={
+                      index === safeActivePlayerIndex ? "is-active" : ""
+                    }
+                    onClick={() => setActivePlayerIndex(index)}
+                    aria-label={`Mostrar ${player.displayName || `jogador ${index + 1}`}`}
+                  />
+                ))}
+              </div>
 
               <div className="carousel-status">
                 <span>
                   {players.length > 0
-                    ? `${Math.min(activePlayerIndex + 1, players.length)} / ${players.length}`
+                    ? `${safeActivePlayerIndex + 1} / ${players.length}`
                     : "0 / 0"}
                 </span>
               </div>
             </div>
 
             <button
-              className="carousel-arrow"
+              className="carousel-arrow carousel-arrow-right"
               type="button"
               onClick={handleNextPlayer}
-              disabled={
-                players.length <= 1 || activePlayerIndex >= players.length - 1
-              }
+              disabled={players.length <= 1}
               aria-label="Proximo jogador"
             >
               ›
